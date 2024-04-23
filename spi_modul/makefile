@@ -1,7 +1,7 @@
-SOURCES=main.cpp spi.cpp
+SOURCES=main.cpp MsgQueue.cpp Message.cpp
 OBJECTS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.o))
 DEPS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.d))
-EXE=spi_tester
+EXE=prog
 CXXFLAGS=-I.
 
 ARCH?=x86-64
@@ -20,6 +20,7 @@ ifeq (${ARCH},arm)
 CXX=arm-rpizw-g++
 BUILD_DIR=build/arm
 BIN_DIR=bin/arm
+CXXFLAGS += -pthread
 endif
 
 $(BIN_DIR)/$(EXE): $(DEPS) $(OBJECTS)
