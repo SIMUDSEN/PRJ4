@@ -7,7 +7,7 @@ int file_descriptor;
 const char *file_path = "/dev/spi_drv0";
 char header;
 char command;
-char data[2];
+char sendData[2];
 char id[2];
 
 // Enumerations and definitions
@@ -44,7 +44,7 @@ enum command{
     COMMAND_GET_DATA_SIZE = 0x15,
 };
 
-enum data{
+enum confirmData{
     DATA_CONFIRM_FINISHED = 0x01,
     DATA_CONFIRM_RECEIVED = 0x02
 };
@@ -57,6 +57,8 @@ enum data{
 void write_to_spi(int requireConfirm);
 
 void get_single_data(enum command dataType, char* dataBuffer);
+
+// Function definitions
 
 int initialize_spi(){
     file_descriptor = open(file_path, O_RDWR);
@@ -72,8 +74,8 @@ void write_to_spi(int requireConfirm = 1){
     read(file_descriptor, tempData, sizeof(tempData));
     } while ((tempData[0] != DATA_CONFIRM_RECEIVED) | requireConfirm != 1); // Hvis vi vil have en confirmation, så skal vi vente på den
 
-    data[0] = tempData[0];
-    data[1] = tempData[1];
+    sendData[0] = tempData[0];
+    sendData[1] = tempData[1];
     id[0] = tempData[2];
     id[1] = tempData[3];
 }
@@ -81,8 +83,8 @@ void write_to_spi(int requireConfirm = 1){
 void get_single_data(enum command dataType, char* dataBuffer){
     command = dataType;
     write_to_spi();
-    dataBuffer[0] = data[0];
-    dataBuffer[1] = data[1];
+    dataBuffer[0] = sendData[0];
+    dataBuffer[1] = sendData[1];
 }
 
 int config_general(){
@@ -98,7 +100,7 @@ int config_general(){
     while (1)
     {
         write_to_spi();
-        if (data[0] == DATA_CONFIRM_FINISHED)
+        if (sendData[0] == DATA_CONFIRM_FINISHED)
             return 1;
         usleep(POLLING_DELAY_US);
     }
@@ -118,7 +120,7 @@ int config_specific(){
     while (1)
     {
         write_to_spi();
-        if (data[0] == DATA_CONFIRM_FINISHED)
+        if (sendData[0] == DATA_CONFIRM_FINISHED)
             return 1;
         usleep(POLLING_DELAY_US);
     }
@@ -138,7 +140,7 @@ int start_measurement(){
     while (1)
     {
         write_to_spi();
-        if (data[0] == DATA_CONFIRM_FINISHED)
+        if (sendData[0] == DATA_CONFIRM_FINISHED)
             return 1;
         usleep(POLLING_DELAY_US);
     }
@@ -152,7 +154,7 @@ struct measurement_total get_data(){
     header = HEADER_GET_DATA_SIZE;
     command = COMMAND_GET_DATA_SIZE;
     write_to_spi();
-    dataSize = data[0] << 8 | data[1];
+    dataSize = sendData[0] << 8 | sendData[1];
 
     // Så skal vi hente dataen
     struct measurement_total measurements;

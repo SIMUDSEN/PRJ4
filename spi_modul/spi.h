@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
 // Structs
 struct measurement_single{
     char angle[2];
@@ -27,7 +26,7 @@ struct measurement_single{
 };
 
 struct measurement_total{
-    measurement_single* measurements;
+    struct measurement_single* measurements;
     int length;
 };
 

@@ -1,4 +1,4 @@
-SOURCES=main.cpp MsgQueue.cpp Message.cpp
+SOURCES=spi_tester.cpp spi.cpp
 OBJECTS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.o))
 DEPS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.d))
 EXE=prog
