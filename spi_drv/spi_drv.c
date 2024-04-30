@@ -38,6 +38,8 @@ static int spi_devs_cnt = 0; // Nbr devices present
 // Function til at sende/modtage spi data
 void write_to_spi(char* cmd, char* data)
 {
+  if (MODULE_DEBUG)
+    printk(KERN_ALERT "Writing to spi: %i %i %i\n", cmd[0], cmd[1], cmd[2]);
   struct spi_transfer t[8];
   struct spi_message m;
 
@@ -91,6 +93,8 @@ void write_to_spi(char* cmd, char* data)
   spi_message_add_tail(&t[7], &m);
 
   spi_sync(m.spi, &m);
+  if (MODULE_DEBUG)
+    printk(KERN_ALERT "Data received: %i %i %i %i %i\n", data[0], data[1], data[2], data[3], data[4]);
 }
 
 /**********************************************************
@@ -164,13 +168,11 @@ static void __exit spi_drv_exit(void)
 ssize_t spi_drv_write(struct file *filep, const char __user *ubuf,
                       size_t count, loff_t *f_pos)
 {
+
   int minor, len;
   char kbuf[MAXLEN];
 
   minor = iminor(filep->f_inode);
-
-  if(MODULE_DEBUG)
-    printk(KERN_ALERT "Writing to spi_drv %i \n", minor);
 
   /* Limit copy length to MAXLEN allocated andCopy from user */
   len = count < MAXLEN ? count : MAXLEN;
@@ -179,9 +181,6 @@ ssize_t spi_drv_write(struct file *filep, const char __user *ubuf,
 
   /* Pad null termination to string */
   kbuf[len] = '\0';
-
-  if(MODULE_DEBUG)
-    printk("string from user: %s\n", kbuf);
 
   // Flyt data til spi_dev struct
   spi_dev.header    = kbuf[0];
@@ -226,24 +225,21 @@ ssize_t spi_drv_read(struct file *filep, char __user *ubuf,
   cmd[2] = checksum;
 
   // Først sender vi kommandoen
-  if (MODULE_DEBUG)
-    printk(KERN_ALERT "Sending command: %i %i %i\n", cmd[0], cmd[1], cmd[2]);
   write_to_spi(cmd, data);
 
   // Så venter vi i 100 µs
   udelay(DELAY_TIME_US);
 
   // Så læser vi dataen, og checker om checksummen er korrekt, hvis ikke, beder vi om samme data igen, slaven skal da vide at den skal sende samme data igen
-  do{
+  do
+  {
     write_to_spi(cmd, data);
-  }while(data[4] != ~(data[0] + data[1] + data[2] + data[3]));
+    udelay(DELAY_TIME_US);
+  } while ((unsigned char)(data[4]) != (unsigned char)(~(data[0] + data[1] + data[2] + data[3])));
 
-  if(MODULE_DEBUG)
-    printk(KERN_ALERT "Read: %s\n", spi_dev.spi->modalias);
-
-  /* Convert integer to string limited to "count" size. Returns
+  /* Convert chars to string limited to "count" size. Returns
    * length excluding NULL termination */
-  len = snprintf(resultBuf, count, "%c%c%c%c\n", data[0], data[1], data[2], data[3]);
+  len = snprintf(resultBuf, count, "%3i%3i%3i%3i\n", (int)(data[0]), (int)(data[1]), (int)(data[2]), (int)(data[3]));
 
   /* Append Length of NULL termination */
   len++;

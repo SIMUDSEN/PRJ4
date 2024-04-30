@@ -1,7 +1,7 @@
 SOURCES=spi_tester.cpp spi.cpp
 OBJECTS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.o))
 DEPS=$(addprefix $(BUILD_DIR)/, $(SOURCES:.cpp=.d))
-EXE=prog
+EXE=spi_tester
 CXXFLAGS=-I.
 
 ARCH?=x86-64

@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#define MODULE_DEBUG 0
+
 // Diverse globale variable
 int file_descriptor;
 const char *file_path = "/dev/spi_drv0";
@@ -51,12 +53,12 @@ enum confirmData{
 
 #define POLLING_FREQUENCY 100
 #define POLLING_DELAY_US 1000000/POLLING_FREQUENCY
-#define REQUIRE_CONFIRM 1
+#define REQUIRE_CONFIRM 0
 
 // Private functions
 void write_to_spi(int requireConfirm);
-
 void get_single_data(enum command dataType, char* dataBuffer);
+void dataChar_to_dataFloat(struct measurement_total* dataChar, struct measurement_total_float* dataFloat);
 
 // Function definitions
 
@@ -65,14 +67,28 @@ int initialize_spi(){
     return file_descriptor;
 }
 
-void write_to_spi(int requireConfirm = 1){
+void write_to_spi(int requireConfirm = 0){
     char sendCode[2] = {header, command};
+    char receiveString[256];
     char tempData[4];
 
-    do{
-    write(file_descriptor, &sendCode, sizeof(sendCode));
-    read(file_descriptor, tempData, sizeof(tempData));
-    } while ((tempData[0] != DATA_CONFIRM_RECEIVED) | requireConfirm != 1); // Hvis vi vil have en confirmation, så skal vi vente på den
+    do
+    {
+        write(file_descriptor, &sendCode, sizeof(sendCode));
+        read(file_descriptor, receiveString, sizeof(receiveString));
+
+        if (MODULE_DEBUG)
+            cout << "Received string: " << receiveString << endl;
+
+        for (size_t i = 0; i < 4; i++){
+            char intBuf[3] = {receiveString[i*3], receiveString[i*3+1], receiveString[i*3+2]};
+            tempData[i] = (char)(atoi(intBuf));
+        }
+
+        if (MODULE_DEBUG)
+            cout << "Received chars: " << (int)tempData[0] << " " << (int)tempData[1] << " " << (int)tempData[2] << " " << (int)tempData[3] << endl;
+
+    } while ((tempData[1] != DATA_CONFIRM_RECEIVED) & (requireConfirm == 1));
 
     sendData[0] = tempData[0];
     sendData[1] = tempData[1];
@@ -100,7 +116,7 @@ int config_general(){
     while (1)
     {
         write_to_spi();
-        if (sendData[0] == DATA_CONFIRM_FINISHED)
+        if (sendData[1] == DATA_CONFIRM_FINISHED)
             return 1;
         usleep(POLLING_DELAY_US);
     }
@@ -140,14 +156,39 @@ int start_measurement(){
     while (1)
     {
         write_to_spi();
-        if (sendData[0] == DATA_CONFIRM_FINISHED)
+        if (sendData[1] == DATA_CONFIRM_FINISHED)
             return 1;
         usleep(POLLING_DELAY_US);
     }
     return 0;
 }
 
-struct measurement_total get_data(){
+void dataChar_to_dataFloat(struct measurement_total* dataChar, struct measurement_total_float* dataFloat){
+    dataFloat->length = dataChar->length;
+    dataFloat->measurements = new measurement_single_float[dataChar->length];
+
+    for (size_t i = 0; i < dataChar->length; i++){
+        dataFloat->measurements[i].angle = (float)((int)(dataChar->measurements[i].angle[0] << 8 |dataChar->measurements[i].angle[1]))/10;
+        dataFloat->measurements[i].dist_0 = (float)((int)(dataChar->measurements[i].dist_0[0] << 8 |dataChar->measurements[i].dist_0[1]))/100;
+        dataFloat->measurements[i].dist_1 = (float)((int)(dataChar->measurements[i].dist_1[0] << 8 |dataChar->measurements[i].dist_1[1]))/100;
+        dataFloat->measurements[i].dist_2 = (float)((int)(dataChar->measurements[i].dist_2[0] << 8 |dataChar->measurements[i].dist_2[1]))/100;
+        dataFloat->measurements[i].dist_3 = (float)((int)(dataChar->measurements[i].dist_3[0] << 8 |dataChar->measurements[i].dist_3[1]))/100;
+        dataFloat->measurements[i].dist_4 = (float)((int)(dataChar->measurements[i].dist_4[0] << 8 |dataChar->measurements[i].dist_4[1]))/100;
+        dataFloat->measurements[i].dist_5 = (float)((int)(dataChar->measurements[i].dist_5[0] << 8 |dataChar->measurements[i].dist_5[1]))/100;
+        dataFloat->measurements[i].dist_6 = (float)((int)(dataChar->measurements[i].dist_6[0] << 8 |dataChar->measurements[i].dist_6[1]))/100;
+        dataFloat->measurements[i].dist_7 = (float)((int)(dataChar->measurements[i].dist_7[0] << 8 |dataChar->measurements[i].dist_7[1]))/100;
+        dataFloat->measurements[i].temp_0 = (float)((int)(dataChar->measurements[i].temp_0[0] << 8 |dataChar->measurements[i].temp_0[1]))/10;
+        dataFloat->measurements[i].temp_1 = (float)((int)(dataChar->measurements[i].temp_1[0] << 8 |dataChar->measurements[i].temp_1[1]))/10;
+        dataFloat->measurements[i].temp_2 = (float)((int)(dataChar->measurements[i].temp_2[0] << 8 |dataChar->measurements[i].temp_2[1]))/10;
+        dataFloat->measurements[i].temp_3 = (float)((int)(dataChar->measurements[i].temp_3[0] << 8 |dataChar->measurements[i].temp_3[1]))/10;
+        dataFloat->measurements[i].temp_4 = (float)((int)(dataChar->measurements[i].temp_4[0] << 8 |dataChar->measurements[i].temp_4[1]))/10;
+        dataFloat->measurements[i].temp_5 = (float)((int)(dataChar->measurements[i].temp_5[0] << 8 |dataChar->measurements[i].temp_5[1]))/10;
+        dataFloat->measurements[i].temp_6 = (float)((int)(dataChar->measurements[i].temp_6[0] << 8 |dataChar->measurements[i].temp_6[1]))/10;
+        dataFloat->measurements[i].temp_7 = (float)((int)(dataChar->measurements[i].temp_7[0] << 8 |dataChar->measurements[i].temp_7[1]))/10;
+    }
+}
+
+struct measurement_total_float get_data(){
     int dataSize;
 
     // Først skal vi finde ud af hvor meget data vi skal hente
@@ -155,11 +196,14 @@ struct measurement_total get_data(){
     command = COMMAND_GET_DATA_SIZE;
     write_to_spi();
     dataSize = sendData[0] << 8 | sendData[1];
+    cout << "Data size: " << dataSize << endl;
 
     // Så skal vi hente dataen
     struct measurement_total measurements;
     measurements.length = dataSize;
     measurements.measurements = new measurement_single[dataSize];
+
+    struct measurement_total_float measurements_float;
 
     for (size_t i = 0; i < dataSize; i++)
     {
@@ -191,7 +235,10 @@ struct measurement_total get_data(){
         //Indsæt datapunkt i totale measurement
         measurements.measurements[i] = measurement;
     }
-    
 
-    return measurements;
+    dataChar_to_dataFloat(&measurements, &measurements_float);
+
+    delete(measurements.measurements);
+
+    return measurements_float;
 }
