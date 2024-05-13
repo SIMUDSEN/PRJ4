@@ -72,13 +72,9 @@ void write_to_spi(int requireConfirm = 0){
     char receiveString[256];
     char tempData[4];
 
-    do
-    {
+    do{
         write(file_descriptor, &sendCode, sizeof(sendCode));
         read(file_descriptor, receiveString, sizeof(receiveString));
-
-        if (MODULE_DEBUG)
-            cout << "Received string: " << receiveString << endl;
 
         for (size_t i = 0; i < 4; i++){
             char intBuf[3] = {receiveString[i*3], receiveString[i*3+1], receiveString[i*3+2]};

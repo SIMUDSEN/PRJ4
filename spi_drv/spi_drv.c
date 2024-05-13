@@ -7,6 +7,7 @@
 #define MAXLEN 32
 #define MODULE_DEBUG 0      // Enable/Disable Debug messages
 #define DELAY_TIME_US 100   // Delay in microseconds
+#define MAX_ATTEMPTS 100    // Max attempts to get correct data
 
 /* Char Driver Globals */
 static struct spi_driver spi_drv_spi_driver;
@@ -231,11 +232,11 @@ ssize_t spi_drv_read(struct file *filep, char __user *ubuf,
   udelay(DELAY_TIME_US);
 
   // Så læser vi dataen, og checker om checksummen er korrekt, hvis ikke, beder vi om samme data igen, slaven skal da vide at den skal sende samme data igen
-  do
-  {
+  int attemptCount = 0;
+  do{
     write_to_spi(cmd, data);
     udelay(DELAY_TIME_US);
-  } while ((unsigned char)(data[4]) != (unsigned char)(~(data[0] + data[1] + data[2] + data[3])));
+  } while (((unsigned char)(data[4]) != (unsigned char)(~(data[0] + data[1] + data[2] + data[3]))) & (attemptCount++ < MAX_ATTEMPTS));
 
   /* Convert chars to string limited to "count" size. Returns
    * length excluding NULL termination */
