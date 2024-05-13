@@ -164,7 +164,7 @@ void dataChar_to_dataFloat(struct measurement_total* dataChar, struct measuremen
     dataFloat->measurements = new measurement_single_float[dataChar->length];
 
     for (size_t i = 0; i < dataChar->length; i++){
-        dataFloat->measurements[i].angle = (float)((int)(dataChar->measurements[i].angle[0] << 8 |dataChar->measurements[i].angle[1]))/10;
+        dataFloat->measurements[i].angle = (float)((int)(dataChar->measurements[i].angle[0] << 8 |dataChar->measurements[i].angle[1]))/1;
         dataFloat->measurements[i].dist_0 = (float)((int)(dataChar->measurements[i].dist_0[0] << 8 |dataChar->measurements[i].dist_0[1]))/100;
         dataFloat->measurements[i].dist_1 = (float)((int)(dataChar->measurements[i].dist_1[0] << 8 |dataChar->measurements[i].dist_1[1]))/100;
         dataFloat->measurements[i].dist_2 = (float)((int)(dataChar->measurements[i].dist_2[0] << 8 |dataChar->measurements[i].dist_2[1]))/100;

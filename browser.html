@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.3/js/tabulator.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabulator/3.5.3/css/tabulator.min.css"></link>
+    <script type = "text/javascript">
+
+
+
+// Konfigure general mesurement
+function configureGeneralMeasurement() {
+    axios.get('http://10.9.8.2:8080/config_general')  //use get from axios library 
+      .then(response => {   
+        var responseBody = response.data; 
+        
+        document.getElementById('config general response-container').innerText = responseBody;
+            }).catch(error => alert('Try again'));            
+    }
+
+// Konfigure specifik mesurement
+function configureSpecificMeasurement() {
+    axios.get('http://10.9.8.2:8080/config_specific')  //use get from axios library 
+      .then(response => {             // Get the response from your server
+       var   responseBody = response.data;
+        
+       document.getElementById('config specific response-container').innerText = responseBody;
+            }).catch(error => alert('Try again'));
+    }
+
+
+
+
+// Hent general måling data
+function getGeneralMeasurementData() {
+    axios.get('http://10.9.8.2:8080/start_general_measurement')  //use get from axios library 
+      .then(response => {             // Get the response from your server
+        allData(response.data)
+
+  
+            }).catch(error => alert('Try again'));
+    }
+
+// Hent specific måling data
+function getSpecificMeasurementData() {
+    axios.get('http://10.9.8.2:8080/start_specific_measurement')  //use get from axios library 
+      .then(response => {             // Get the response from your server
+        allData(response.data)
+
+            }).catch(error => alert('Try again'));
+    }
+
+
+
+// Find lavest temperatur fra generalrummåling
+function getGeneralLowestTemp() {
+    axios.get('http://10.9.8.2:8080/general_lowest_temp')  //use get from axios library 
+      .then(response => {             // Get the response from your server
+        finalData(response.data)
+
+        //document.getElementById('general measurement reponse-container').innerText=responseBody;
+            }).catch(error => alert('Try again'));
+    }
+
+
+// Find laveste temperatur fra specifik måling
+function getSpecificLowestTemp() {
+    axios.get('http://10.9.8.2:8080/specific_lowest_temp')  //use get from axios library 
+      .then(response => {             // Get the response from your server
+        finalData(response.data)
+
+        //document.getElementById('general measurement reponse-container').innerText=responseBody;
+            }).catch(error => alert('Try again'));
+    }
+
+
+
+
+
+
+
+
+    /* set a table to display weather data from your server */
+    function allData(data){
+
+    $("#allTable").tabulator({
+        layout: "fitDataFill",
+        height: "311px",
+        columns: [
+        {
+            title: "Angle",
+            field: "angle"
+        },
+        {
+            title: "Dist 0",
+            field: "dist_0"
+        },
+        {
+            title: "Dist 1",
+            field: "dist_1"
+        },
+        {
+            title: "Dist 2",
+            field: "dist_2"
+        },
+        {
+            title: "Dist 3",
+            field: "dist_3"
+        },
+        {
+            title: "Dist 4",
+            field: "dist_4"
+        },
+        {
+            title: "Dist 5",
+            field: "dist_5"
+        },
+        {
+            title: "Dist 6",
+            field: "dist_6"
+        },
+        {
+            title: "Dist 7",
+            field: "dist_7"
+        },
+        {
+            title: "Temp 0",
+            field: "temp_0"
+        },
+        {
+            title: "Temp 1",
+            field: "temp_1"
+        },
+        {
+            title: "Temp 2",
+            field: "temp_2"
+        },
+        {
+            title: "Temp 3",
+            field: "temp_3"
+        },
+        {
+            title: "Temp 4",
+            field: "temp_4"
+        },
+        {
+            title: "Temp 5",
+            field: "temp_5"
+        },
+        {
+            title: "Temp 6",
+            field: "temp_6"
+        },
+        {
+            title: "Temp 7",
+            field: "temp_7"
+        },
+        {
+            title: "Measurement_id",
+            field: "measurementID"
+        }
+        ],
+    });
+    $("#allTable").tabulator("setData", data);
+    }
+
+    function finalData(data){
+
+        var array =[data];
+
+    $("#finalTable").tabulator({
+        layout: "fitDataFill",
+        height: "311px",
+        columns: [
+        {
+            title: "Angle",
+            field: "angle1"
+        },
+        {
+            title: "Temperature",
+            field: "temperatur1"
+        },
+        {
+            title: "Distance",
+            field: "distance1"
+
+        }
+        ],
+    });
+    $("#finalTable").tabulator("setData", array);
+    }
+
+    
+
+
+
+</script>
+</head>
+<body>
+<h1> MART-E </h1>
+<h3> 1: Vælg en konfigurering og vent på retur svar</h3>
+<h3> 2: Start en måling og vent på at du får data tilbage </h3>
+<h3> 3: Find den laveste temperatur ved at trykke 'Find lowest temperature' </h3>
+
+
+<h3> Generel rummåling </h3>
+
+<div><input type = "button" onclick ="configureGeneralMeasurement()" value = "Configure General measurement"></div>
+<div id="config general response-container"></div>
+
+<div><input type = "button" onclick ="getGeneralMeasurementData()" value = "Start general measurement"></div>
+<div id="allTable"></div>
+
+<div><input type = "button" onclick ="getGeneralLowestTemp()" value = "Find lowest temperature"></div>
+<div id="finalTable"></div>
+
+
+
+
+
+<h3> Specifik rummåling</h3>
+<div><input type = "button" onclick ="configureSpecificMeasurement()" value = "Configure specific measurement"></div>
+<div id="config specific response-container"></div>
+
+
+<div><input type = "button" onclick ="getSpecificMeasurementData()" value = "Start specific measurement"></div>
+<div id="allTable"></div>
+
+<div><input type = "button" onclick ="getSpecificLowestTemp()" value = "Find lowest temperature"></div>
+<div id="finalTable"></div>
+
+</body>
+</html>

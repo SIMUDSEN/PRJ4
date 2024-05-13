@@ -236,7 +236,8 @@ ssize_t spi_drv_read(struct file *filep, char __user *ubuf,
   do{
     write_to_spi(cmd, data);
     udelay(DELAY_TIME_US);
-  } while (((unsigned char)(data[4]) != (unsigned char)(~(data[0] + data[1] + data[2] + data[3]))) & (attemptCount++ < MAX_ATTEMPTS));
+    attemptCount++;
+  } while (((unsigned char)(data[4]) != (unsigned char)(~(data[0] + data[1] + data[2] + data[3]))) & (attemptCount < MAX_ATTEMPTS));
 
   /* Convert chars to string limited to "count" size. Returns
    * length excluding NULL termination */
